@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+mpl_cache/
+
+# Test audio
+test.mp3
+test_male.wav
+test_sapi.wav
+
+# Temporary text extraction
+lab4_extracted_text.txt
+lab4_pdf_text.txt
+
+# Temporary scripts
+download_real_audio.py
+fetch_clean_voice.py
+
+# Temporary mp3 downloads
+lab4_data/temp_mp3/
