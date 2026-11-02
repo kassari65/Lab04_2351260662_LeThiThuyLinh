@@ -86,16 +86,34 @@ $$
 
 Trong đó:
 - **Nguồn kích thích thanh quản $E(z)$ (Glottal Excitation):**
-  - Đối với âm hữu thanh (Voiced sounds): Kích thích là chuỗi xung nhịp tuần hoàn gần chu kỳ với tần số cơ bản $F_0 = rac{F_s}{N_p}$ (trong đó $N_p$ là chu kỳ pitch tính theo số mẫu, $F_s$ là tần số lấy mẫu).
+  - Đối với âm hữu thanh (Voiced sounds): Kích thích là chuỗi xung nhịp tuần hoàn gần chu kỳ với tần số cơ bản:
+
+    $$
+    F_0 = \frac{F_s}{N_p}
+    $$
+
+    (trong đó $N_p$ là chu kỳ pitch tính theo số mẫu, $F_s$ là tần số lấy mẫu).
   - Đối với âm vô thanh (Unvoiced sounds): Kích thích là nhiễu trắng ngẫu nhiên $e[n] \sim \mathcal{N}(0, \sigma^2)$ do luồng khí xoáy qua khe hẹp thanh quản.
+
 - **Hàm truyền thanh đạo $H(z)$ (Vocal Tract Transfer Function):** Mô hình hóa như một bộ lọc cộng hưởng toàn cực (All-Pole IIR Filter):
 
-  $$
-  H(z) = rac{G}{A(z)} = rac{G}{1 - \sum_{k=1}^p a_k z^{-k}} = \prod_{m=1}^M rac{1 - 2r_m \cos(	heta_m) + r_m^2}{1 - 2r_m \cos(	heta_m) z^{-1} + r_m^2 z^{-2}}
-  $$
+    $$
+    H(z) = \frac{G}{A(z)} = \frac{G}{1 - \sum_{k=1}^p a_k z^{-k}} = \prod_{m=1}^M \frac{1 - 2r_m \cos(\theta_m) + r_m^2}{1 - 2r_m \cos(\theta_m) z^{-1} + r_m^2 z^{-2}}
+    $$
 
-  Mỗi cặp cực liên hợp phức $(r_m e^{\pm j	heta_m})$ tương ứng với một tần số cộng hưởng Formant $F_m = rac{	heta_m F_s}{2\pi}$ và độ rộng dải thông Bandwidth $B_m = -rac{F_s}{\pi} \ln(r_m)$.
-- **Hiệu ứng bức xạ môi $R(z) pprox 1 - z^{-1}$ (Lip Radiation):** Tương đương một bộ vi phân bậc một làm tăng phổ ở tần số cao (+6 dB/octave).
+    Mỗi cặp cực liên hợp phức $(r_m e^{\pm j\theta_m})$ tương ứng với một tần số cộng hưởng Formant:
+
+    $$
+    F_m = \frac{\theta_m F_s}{2\pi}
+    $$
+
+    và độ rộng dải thông Bandwidth:
+
+    $$
+    B_m = -\frac{F_s}{\pi} \ln(r_m)
+    $$
+
+- **Hiệu ứng bức xạ môi $R(z) \approx 1 - z^{-1}$ (Lip Radiation):** Tương đương một bộ vi phân bậc một làm tăng phổ ở tần số cao (+6 dB/octave).
 
 ### 2.4. Tổng hợp ghép nối (Concatenative Synthesis) và Lựa chọn đơn vị (Unit Selection)
 
@@ -142,7 +160,11 @@ Khi ghép trực tiếp hai đoạn tín hiệu $x_1[n]$ và $x_2[n]$, sự bấ
   y[n] = (1 - \alpha[n]) x_1[n] + \alpha[n] x_2[n], \quad 0 \le n < N
   $$
 
-  với hàm trọng số tuyến tính (Linear Ramp): $\alpha[n] = \frac{n}{N - 1}$.
+  với hàm trọng số tuyến tính (Linear Ramp):
+
+  $$
+  \alpha[n] = \frac{n}{N - 1}
+  $$
 
 - **Nguyên lý Overlap-Add (OLA):**
 
@@ -158,7 +180,7 @@ Khi ghép trực tiếp hai đoạn tín hiệu $x_1[n]$ và $x_2[n]$, sự bấ
   s_i[n] = s[n] \cdot h_i[n - t_i]
   $$
 
-  với $h_i[n]$ là cửa sổ Hanning có chiều dài $2T_0$. Khi tái định vị các mốc pitch marks với khoảng cách mới $T_{new} = \frac{F_s}{F_{0, new}}$, ta biến đổi cao độ $F_0$ độc lập với thời lượng mà vẫn bảo toàn bao phổ thanh đạo (Formants). Quan hệ bán âm:
+  với $h_i[n]$ là cửa sổ Hanning có chiều dài $2T_0$. Khi tái định vị các mốc pitch marks với khoảng cách mới $T_{new} = \frac{F_s}{F_{0, new}}$, ta biến đổi cao độ $F_0$ độc lập với thời lượng mà vẫn bảo toàn bao phổ thanh đạo (Formants). Mối quan hệ giữa số bán âm $\Delta s$ và hệ số tỷ lệ tần số $r$:
 
   $$
   r = 2^{\Delta s / 12}, \quad F_{0, new} = r \cdot F_{0, old}
@@ -183,6 +205,7 @@ Ngược lại với việc ghép các đoạn dạng sóng có sẵn, HMM param
   Trong đó $\mathbf{W}$ là ma trận biến đổi delta, $\boldsymbol{\mu}_{\mathbf{q}}$ và $\mathbf{\Sigma}_{\mathbf{q}}$ là vector kỳ vọng và ma trận hiệp phương sai của dãy trạng thái $\mathbf{q}$. Nhờ ràng buộc của ma trận $\mathbf{W}$, quỹ đạo tham số âm học thu được trơn tru và không bị gián đoạn từng bậc giữa các bước nhảy trạng thái.
 
 ### 2.7. Tổng hợp tiếng nói học sâu (Neural TTS Pipeline)
+
 Kiến trúc TTS hiện đại kết hợp hai khối mạng nơ-ron học sâu:
 1. **Acoustic Model:** Ánh xạ biểu diễn văn bản/âm vị $W$ thành biểu diễn đặc trưng âm học trung gian thời gian-tần số (thông thường là 80-channel Log-Mel Spectrogram $\mathbf{M} \in \mathbb{R}^{80 \times T_{frames}}$).
 2. **Neural Vocoder:** Phục hồi pha và chuyển đổi Mel-spectrogram thành dạng sóng thời gian $s[n] \in \mathbb{R}^N$ thông qua các kiến trúc khuếch tán (Diffusion), GAN (HiFi-GAN), hoặc thuật toán lặp xấp xỉ pha Griffin-Lim.
@@ -219,6 +242,9 @@ flowchart LR
   $$
 
   Một hệ thống đạt chuẩn phục vụ thời gian thực khi $\text{RTF} < 1.0$ (lý tưởng $\text{RTF} \le 0.1$ trên CPU).
+
+---
+
 
 ## 3. THIẾT KẾ DỮ LIỆU THỰC NGHIỆM: ĐOẠN THOẠI TIẾP THỊ KHÁCH HÀNG
 
