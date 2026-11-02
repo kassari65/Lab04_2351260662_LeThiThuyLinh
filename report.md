@@ -87,105 +87,135 @@ $$
 Trong đó:
 - **Nguồn kích thích thanh quản $E(z)$ (Glottal Excitation):**
   - Đối với âm hữu thanh (Voiced sounds): Kích thích là chuỗi xung nhịp tuần hoàn gần chu kỳ với tần số cơ bản:
-
-    $$
-    F_0 = \frac{F_s}{N_p}
-    $$
+$F_0 = F_s / N_p$
 
     (trong đó $N_p$ là chu kỳ pitch tính theo số mẫu, $F_s$ là tần số lấy mẫu).
   - Đối với âm vô thanh (Unvoiced sounds): Kích thích là nhiễu trắng ngẫu nhiên $e[n] \sim \mathcal{N}(0, \sigma^2)$ do luồng khí xoáy qua khe hẹp thanh quản.
 
 - **Hàm truyền thanh đạo $H(z)$ (Vocal Tract Transfer Function):** Mô hình hóa như một bộ lọc cộng hưởng toàn cực (All-Pole IIR Filter):
 
-    $$
-    H(z) = \frac{G}{A(z)} = \frac{G}{1 - \sum_{k=1}^p a_k z^{-k}} = \prod_{m=1}^M \frac{1 - 2r_m \cos(\theta_m) + r_m^2}{1 - 2r_m \cos(\theta_m) z^{-1} + r_m^2 z^{-2}}
-    $$
+$$
+H(z) = \frac{G}{A(z)} = \frac{G}{1 - \sum_{k=1}^{p} a_k z^{-k}} = \prod_{m=1}^{M} \frac{1 - 2r_m \cos(\theta_m) + r_m^2}{1 - 2r_m \cos(\theta_m)z^{-1} + r_m^2 z^{-2}}
+$$
 
-    Mỗi cặp cực liên hợp phức $(r_m e^{\pm j\theta_m})$ tương ứng với một tần số cộng hưởng Formant:
+Mỗi cặp cực liên hợp phức $(r_m e^{\pm j\theta_m})$ tương ứng với một tần số cộng hưởng Formant:
 
-    $$
-    F_m = \frac{\theta_m F_s}{2\pi}
-    $$
+$$
+F_m = \frac{\theta_m F_s}{2\pi}
+$$
 
-    và độ rộng dải thông Bandwidth:
+Và độ rộng dải thông Bandwidth:
 
-    $$
-    B_m = -\frac{F_s}{\pi} \ln(r_m)
-    $$
+$$
+B_m = -\frac{F_s}{\pi}\ln(r_m)
+$$
 
 - **Hiệu ứng bức xạ môi $R(z) \approx 1 - z^{-1}$ (Lip Radiation):** Tương đương một bộ vi phân bậc một làm tăng phổ ở tần số cao (+6 dB/octave).
 
 ### 2.4. Tổng hợp ghép nối (Concatenative Synthesis) và Lựa chọn đơn vị (Unit Selection)
 
-Bài toán tổng hợp ghép nối tối ưu tìm chuỗi các đơn vị âm thanh $\theta^* = (\theta_1^*, \theta_2^*, \dots, \theta_J^*)$ từ kho ngữ âm lưu trữ (Speech Inventory $\mathcal{U}$) sao cho cực tiểu hóa phiếm hàm chi phí tổng hợp (Hunt & Black, 1996):
+Bài toán tổng hợp ghép nối tối ưu tìm chuỗi các đơn vị âm thanh $\theta^{*} = (\theta_1^{*}, \theta_2^{*}, \ldots, \theta_J^{*})$ từ kho ngữ âm lưu trữ (Speech Inventory U) sao cho cực tiểu hóa phiếm hàm chi phí tổng hợp (Hunt & Black, 1996):
 
 $$
 \theta^* = \arg\min_{\theta_1, \dots, \theta_J \in \mathcal{U}} \left[ \sum_{j=1}^J C_{target}(\theta_j, t_j) + \lambda \sum_{j=1}^{J-1} C_{join}(\theta_j, \theta_{j+1}) \right]
 $$
 
 Trong đó:
-- **Target Cost $C_{target}(\theta_j, t_j)$:** Đo lường độ sai khác giữa ứng viên $\theta_j$ và đặc tả ngữ âm - ngữ điệu mong muốn $t_j$:
 
-  $$
-  C_{target}(\theta_j, t_j) = w_{dur} \frac{|d(\theta_j) - d(t_j)|}{\sigma_{dur}} + w_{f0} \frac{|\overline{F}_0(\theta_j) - F_0(t_j)|}{\sigma_{f0}} + w_{gen} \cdot \mathbf{1}(\text{gender}(\theta_j) \neq \text{gender}_{tgt})
-  $$
+**1. Target Cost** (`C_target`): Đo lường độ sai khác giữa ứng viên âm thanh và đặc tả ngữ âm - ngữ điệu mong muốn.
 
-- **Join Cost (Concatenation Cost) $C_{join}(\theta_j, \theta_{j+1})$:** Đo lường mức độ gián đoạn năng lượng, tần số và đường bao phổ tại điểm nối giữa phần đuôi của $\theta_j$ (khung cuối $m$) và phần đầu của $\theta_{j+1}$ (khung đầu $1$):
+$$
+C_{target} = w_{dur} \frac{|d(\theta_j)-d(t_j)|}{\sigma_{dur}} + w_{f0} \frac{|\overline{F}_0(\theta_j)-F_0(t_j)|}{\sigma_{f0}} + w_{gen} I_{gen}
+$$
 
-  $$
-  C_{join}(\theta_j, \theta_{j+1}) = w_E \big| \log E(\theta_j[m]) - \log E(\theta_{j+1}[1]) \big| + w_S \cdot D_{spec}(\theta_j, \theta_{j+1})
-  $$
+**2. Join Cost (Concatenation Cost)**: Đo lường mức độ gián đoạn năng lượng và phổ tại điểm nối giữa hai đơn vị âm thanh.
 
-  Với $D_{spec}$ là khoảng cách bình phương sai số phổ logarit trung bình (Normalized Mean Square Spectral Mismatch) trên $K$ dải tần FFT:
+$$
+C_{join} = w_E |\log E_1-\log E_2| + w_S D_{spec}
+$$
 
-  $$
-  D_{spec}(\theta_j, \theta_{j+1}) = \frac{1}{K} \sum_{k=1}^K \left[ L_{left}[k] - L_{right}[k] \right]^2
-  $$
+Với khoảng cách phổ:
 
-  trong đó $L_{left}[k] = 20 \log_{10} |X_{\theta_j, \text{tail}}[k]|$ và $L_{right}[k] = 20 \log_{10} |X_{\theta_{j+1}, \text{head}}[k]|$.
+$$
+D_{spec} = \frac{1}{K}\sum_{k=1}^{K}(L_{left}[k]-L_{right}[k])^2
+$$
 
-- **Giải thuật Viterbi tìm đường đi tối ưu:** Do cấu trúc đồ thị mạng lưới tầng (Trellis graph), bài toán quy hoạch động Viterbi giải quyết việc tìm chuỗi ứng viên trong thời gian $O(J \cdot M^2)$ với $J$ là số từ và $M$ là số lượng ứng viên tối đa cho mỗi từ:
+Trong đó:
 
-  $$
-  \delta_j(m) = C_{target}(\theta_{j,m}, t_j) + \min_{1 \le k \le M} \left[ \delta_{j-1}(k) + \lambda C_{join}(\theta_{j-1,k}, \theta_{j,m}) \right]
-  $$
+$$
+L_{left}[k] = 20\log_{10}|X_{left}[k]|
+$$
 
+$$
+L_{right}[k] = 20\log_{10}|X_{right}[k]|
+$$
+
+**3. Giải thuật Viterbi tìm đường đi tối ưu**
+
+Bài toán quy hoạch động Viterbi tìm chuỗi ứng viên có chi phí tổng nhỏ nhất, với độ phức tạp tính toán là O(J * M²).
+
+$$
+\delta_j(m) = C_{target}(\theta_{j,m},t_j) + \min_{1 \leq k \leq M} [\delta_{j-1}(k) + \lambda C_{join}(\theta_{j-1,k},\theta_{j,m})]
+$$
 ### 2.5. Kỹ thuật làm trơn biên nối: Cross-fade, OLA và TD-PSOLA
 
 Khi ghép trực tiếp hai đoạn tín hiệu $x_1[n]$ và $x_2[n]$, sự bất liên tục về pha và giá trị tức thời sinh ra sóng xung kích biên (Dirac impulse jump) gây ra tiếng lách cách (click/pop artifact).
 
-- **Phép nối làm trơn Cross-fade:** Thực hiện pha trộn tín hiệu trong vùng chồng lấn $N$ mẫu ($N = F_s \cdot \tau_{xf}$):
+### Phép nối làm trơn Cross-fade
 
-  $$
-  y[n] = (1 - \alpha[n]) x_1[n] + \alpha[n] x_2[n], \quad 0 \le n < N
-  $$
+Thực hiện pha trộn tín hiệu trong vùng chồng lấn N mẫu, với N = Fs * tau_xf.
 
-  với hàm trọng số tuyến tính (Linear Ramp):
+$$
+y[n] = (1 - \alpha[n])x_1[n] + \alpha[n]x_2[n], \quad 0 \leq n < N
+$$
 
-  $$
-  \alpha[n] = \frac{n}{N - 1}
-  $$
+Với hàm trọng số tuyến tính (Linear Ramp):
 
-- **Nguyên lý Overlap-Add (OLA):**
+$$
+\alpha[n] = \frac{n}{N-1}
+$$
 
-  $$
-  y[n] = \sum_{r} x_r[n] = x[n] \sum_{r} w[rR - n]
-  $$
+### Nguyên lý Overlap-Add (OLA)
 
-  Khi hàm cửa sổ phân tích thỏa mãn điều kiện COLA (Constant Overlap-Add): $\sum_r w[rR - n] = 1$, tín hiệu được tái cấu trúc hoàn hảo mà không méo biên độ.
+$$
+y[n] = \sum_r x_r[n] = x[n]\sum_r w[rR-n]
+$$
 
-- **TD-PSOLA (Time-Domain Pitch-Synchronous Overlap-Add):** Phân đoạn tín hiệu đồng bộ với chu kỳ dao động dây thanh quản tại các mốc pitch marks $\{t_i\}$:
+Khi hàm cửa sổ phân tích thỏa mãn điều kiện COLA (Constant Overlap-Add):
 
-  $$
-  s_i[n] = s[n] \cdot h_i[n - t_i]
-  $$
+$$
+\sum_r w[rR-n] = 1
+$$
 
-  với $h_i[n]$ là cửa sổ Hanning có chiều dài $2T_0$. Khi tái định vị các mốc pitch marks với khoảng cách mới $T_{new} = \frac{F_s}{F_{0, new}}$, ta biến đổi cao độ $F_0$ độc lập với thời lượng mà vẫn bảo toàn bao phổ thanh đạo (Formants). Mối quan hệ giữa số bán âm $\Delta s$ và hệ số tỷ lệ tần số $r$:
+Tín hiệu được tái cấu trúc hoàn hảo mà không méo biên độ.
 
-  $$
-  r = 2^{\Delta s / 12}, \quad F_{0, new} = r \cdot F_{0, old}
-  $$
+### TD-PSOLA (Time-Domain Pitch-Synchronous Overlap-Add)
 
+Phân đoạn tín hiệu đồng bộ với chu kỳ dao động dây thanh quản tại các mốc pitch marks $\{t_i\}$:
+
+$$
+s_i[n] = s[n] \cdot h_i[n-t_i]
+$$
+
+Với $h_i[n]$ là cửa sổ Hanning có chiều dài $2T_0$.
+
+Khi tái định vị các mốc pitch marks với khoảng cách mới:
+
+$$
+T_{new} = \frac{F_s}{F_{0,new}}
+$$
+
+Ta biến đổi cao độ $F_0$ độc lập với thời lượng mà vẫn bảo toàn bao phổ thanh đạo (Formants).
+
+Mối quan hệ giữa số bán âm $\Delta s$ và hệ số tỷ lệ tần số $r$:
+
+$$
+r = 2^{\Delta s/12}
+$$
+
+$$
+F_{0,new} = r \cdot F_{0,old}
+$$
 ### 2.6. Tổng hợp tham số dựa trên HMM (HMM-based Speech Synthesis) và MLPG
 
 Ngược lại với việc ghép các đoạn dạng sóng có sẵn, HMM parametric synthesis xem việc phát âm là quá trình phát sinh tín hiệu từ các phân bố xác suất của mô hình Markov ẩn $\lambda = (\mathbf{A}, \mathbf{B}, \boldsymbol{\pi})$.
